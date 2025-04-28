@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBIZA-RESULTS10KMW-AQUA-JUN_resultados_finais</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #legenda {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 250px;
+        }
+        .chart-container {
+            width: calc(100% - 300px);
+            margin-right: 300px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .checkbox-container input {
+            margin-right: 8px;
+        }
+        .search-box {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 5px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                width: 100%;
+                margin-right: 0;
+            }
+            #legenda {
+                position: static;
+                width: auto;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>IBIZA-RESULTS10KMW-AQUA-JUN_resultados_finais</h1>
+    <div class="chart-container">
+        <canvas id="voltasChart"></canvas>
+    </div>
+    <div id="legenda">
+        <h3>Athletes:</h3>
+        <input type="text" id="searchBox" class="search-box" placeholder="Search...">
+        <div id="checkboxes"></div>
+    </div>
+
+    <script>
+        const formatTime = (seconds) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = (seconds % 60).toFixed(1);
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.padStart(4, '0')}`;
+            } else {
+                return `${minutes}:${secs.padStart(4, '0')}`;
+            }
+        };
+
+        const atletas = [{'name': 'MARTINEZ Clara (ESP)', 'positions': [0, 1, 1, 1, 1, 1, 1], 'times': [0, 1142.7, 2341.6, 3539.3, 4741.7, 5929.2, 7153.8], 'country': 'ESP'}, {'name': 'RUMLER Luisa (GER)', 'positions': [0, 3, 3, 3, 2, 2, 2], 'times': [0, 1153.0, 2351.8, 3547.9, 4748.4, 5996.8, 7280.7], 'country': 'GER'}, {'name': 'KASVIO Louna (FIN)', 'positions': [0, 2, 2, 2, 3, 3, 3], 'times': [0, 1143.6, 2344.1, 3543.5, 4763.8, 6033.8, 7325.2], 'country': 'FIN'}, {'name': 'BARTH Anna Marie (GER)', 'positions': [0, 7, 6, 5, 4, 4, 4], 'times': [0, 1161.0, 2408.9, 3692.7, 4976.3, 6262.9, 7537.9], 'country': 'GER'}, {'name': 'SANZULLO Chiara (ITA)', 'positions': [0, 8, 7, 4, 8, 7, 5], 'times': [0, 1168.4, 2409.4, 3692.3, 4980.5, 6267.1, 7541.1], 'country': 'ITA'}, {'name': 'HOESEL Aliyah (GER)', 'positions': [0, 4, 5, 7, 6, 9, 6], 'times': [0, 1156.2, 2407.8, 3693.5, 4979.9, 6269.5, 7542.1], 'country': 'GER'}, {'name': 'MOURENZA ROCHA Ines (ESP)', 'positions': [0, 5, 9, 6, 7, 6, 7], 'times': [0, 1159.0, 2410.0, 3693.0, 4980.1, 6266.0, 7547.3], 'country': 'ESP'}, {'name': 'MEJIA GALLEGO Alexandra (AND)', 'positions': [0, 11, 11, 11, 11, 10, 8], 'times': [0, 1177.3, 2412.8, 3698.5, 4988.6, 6271.7, 7549.6], 'country': 'AND'}, {'name': 'RICHARD Clemence (FRA)', 'positions': [0, 9, 8, 10, 5, 5, 9], 'times': [0, 1173.2, 2409.6, 3695.1, 4978.2, 6265.4, 7549.7], 'country': 'FRA'}, {'name': 'SOBRAL Lizian (BRA)', 'positions': [0, 10, 10, 8, 9, 8, 10], 'times': [0, 1176.9, 2411.1, 3694.1, 4982.0, 6268.9, 7579.7], 'country': 'BRA'}, {'name': 'COLL MARTI Julia (ESP)', 'positions': [0, 6, 4, 9, 10, 11, 11], 'times': [0, 1159.7, 2407.4, 3694.6, 4984.3, 6278.2, 7610.6], 'country': 'ESP'}, {'name': 'BRUHIN Anina (SUI)', 'positions': [0, 12, 12, 12, 12, 12, 12], 'times': [0, 1181.1, 2467.7, 3788.9, 5153.9, 6524.7, 7912.3], 'country': 'SUI'}, {'name': 'RUIZ REYES Raquel (ESP)', 'positions': [0, 15, 13, 13, 13, 13, 13], 'times': [0, 1307.9, 2696.7, 4085.9, 5497.5, 6940.0, 8446.7], 'country': 'ESP'}, {'name': 'MINIYA Aya (MAR)', 'positions': [0, 13, 15, 15, 14, 14, 14], 'times': [0, 1304.2, 2713.1, 4133.1, 5562.3, 6998.8, 8481.1], 'country': 'MAR'}, {'name': 'MARTIN HERNANDEZ Aitana (ESP)', 'positions': [0, 14, 14, 14, 15, 15, 15], 'times': [0, 1306.9, 2711.2, 4132.9, 5563.5, 7000.1, 8499.2], 'country': 'ESP'}];
+        atletas.forEach(atleta => {
+            atleta.cor = `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.8)`;
+        });
+
+        const labels = ["Start", "1666m", "3333m", "5000m", "6666m", "8333m", "Finish"];
+
+        const ctx = document.getElementById('voltasChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: atletas.map((atleta, index) => ({
+                    label: atleta.name,
+                    data: atleta.positions,
+                    tempos: atleta.times,
+                    borderColor: atleta.cor,
+                    backgroundColor: atleta.cor,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    fill: false,
+                    tension: 0.1,
+                    hidden: index >= 10
+                }))
+            },
+            options: {
+                responsive: true,
+                layout: {
+                    padding: {
+                        top: 20
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.dataset.label || '';
+                                const value = context.raw || 0;
+                                const tempo = context.dataset.tempos[context.dataIndex];
+                                const splitTime = tempo - context.dataset.tempos[context.dataIndex-1];
+                                return `${label}: position # ${value} | ${formatTime(tempo)} | split: ${formatTime(splitTime)}`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'IBIZA-RESULTS10KMW-AQUA-JUN_resultados_finais'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        reverse: true,
+                        min: 0,
+                        max: atletas.length,
+                        title: {
+                            display: true,
+                            text: 'Position'
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Checkpoint'
+                        }
+                    }
+                }
+            }
+        });
+
+        const updateChart = () => {
+            atletas.forEach((_, index) => {
+                const meta = chart.getDatasetMeta(index);
+                meta.hidden = !document.getElementById(`atleta${index}`).checked;
+            });
+            chart.update();
+        };
+
+        const filterAthletes = () => {
+            const term = document.getElementById('searchBox').value.toLowerCase();
+            const boxes = document.querySelectorAll('.checkbox-container');
+            boxes.forEach(box => {
+                const label = box.querySelector('label');
+                box.style.display = label.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        };
+
+        const checkboxesContainer = document.getElementById('checkboxes');
+        atletas.forEach((atleta, index) => {
+            const checkboxContainer = document.createElement('div');
+            checkboxContainer.className = 'checkbox-container';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `atleta${index}`;
+            checkbox.checked = index < 10;
+            checkbox.addEventListener('change', updateChart);
+
+            const label = document.createElement('label');
+            label.htmlFor = `atleta${index}`;
+            label.textContent = atleta.name;
+            label.style.color = atleta.cor;
+            label.style.fontWeight = 'bold';
+            label.style.textShadow = '1px 1px 2px #00000033';
+
+            checkboxContainer.appendChild(checkbox);
+            checkboxContainer.appendChild(label);
+            checkboxesContainer.appendChild(checkboxContainer);
+        });
+
+        document.getElementById('searchBox').addEventListener('input', filterAthletes);
+        updateChart();
+    </script>
+</body>
+</html>

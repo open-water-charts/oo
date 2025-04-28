@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBIZA-RESULTS10KMM-AQUA-JUN</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #legenda {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 250px;
+        }
+        .chart-container {
+            width: calc(100% - 300px);
+            margin-right: 300px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .checkbox-container input {
+            margin-right: 8px;
+        }
+        .search-box {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 5px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                width: 100%;
+                margin-right: 0;
+            }
+            #legenda {
+                position: static;
+                width: auto;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>IBIZA-RESULTS10KMM-AQUA-JUN</h1>
+    <div class="chart-container">
+        <canvas id="voltasChart"></canvas>
+    </div>
+    <div id="legenda">
+        <h3>Athletes:</h3>
+        <input type="text" id="searchBox" class="search-box" placeholder="Search...">
+        <div id="checkboxes"></div>
+    </div>
+
+    <script>
+        const formatTime = (seconds) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = (seconds % 60).toFixed(1);
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.padStart(4, '0')}`;
+            } else {
+                return `${minutes}:${secs.padStart(4, '0')}`;
+            }
+        };
+
+        const atletas = [{'name': 'MESMACQUE Emile (FRA)', 'positions': [0, 6, 4, 5, 2, 1, 1], 'times': [0, 1047.9, 2159.2, 3274.4, 4381.9, 5510.1, 6649.4], 'country': 'FRA'}, {'name': 'PASKO Jaan (EST)', 'positions': [0, 3, 3, 2, 3, 4, 2], 'times': [0, 1040.0, 2157.6, 3269.1, 4385.5, 5521.6, 6664.3], 'country': 'EST'}, {'name': 'BRANDT DE MACEDO Leonard (BRA)', 'positions': [0, 5, 9, 8, 5, 3, 3], 'times': [0, 1043.8, 2164.1, 3278.5, 4390.9, 5518.0, 6674.2], 'country': 'BRA'}, {'name': 'KOVACS-SERES Hunor (HUN)', 'positions': [0, 1, 1, 1, 1, 2, 4], 'times': [0, 1034.0, 2146.4, 3253.8, 4375.4, 5514.7, 6692.5], 'country': 'HUN'}, {'name': 'VARGAS Cristobal (ESP)', 'positions': [0, 2, 2, 3, 4, 5, 5], 'times': [0, 1038.1, 2150.4, 3272.8, 4389.8, 5528.2, 6740.3], 'country': 'ESP'}, {'name': 'KLEINHEINZ Finn-Constant (GER)', 'positions': [0, 8, 8, 3, 6, 6, 6], 'times': [0, 1055.3, 2163.9, 3272.8, 4398.0, 5539.1, 6773.4], 'country': 'GER'}, {'name': 'REINKE Simon (GER)', 'positions': [0, 4, 5, 6, 7, 7, 7], 'times': [0, 1041.5, 2160.6, 3276.3, 4429.5, 5628.0, 6854.7], 'country': 'GER'}, {'name': 'HUSZAR Laszlo (HUN)', 'positions': [0, 10, 6, 7, 8, 8, 8], 'times': [0, 1060.2, 2161.8, 3277.2, 4444.5, 5630.7, 6893.9], 'country': 'HUN'}, {'name': 'MALEAU Christophe (FRA)', 'positions': [0, 7, 7, 9, 9, 9, 9], 'times': [0, 1053.3, 2163.2, 3285.4, 4445.5, 5699.9, 7032.2], 'country': 'FRA'}, {'name': 'GARCIA FERNANDEZ Erik (ESP)', 'positions': [0, 12, 12, 12, 11, 10, 10], 'times': [0, 1068.3, 2251.7, 3498.0, 4773.2, 6084.9, 7421.2], 'country': 'ESP'}, {'name': 'LOUREIRO Bruno (POR)', 'positions': [0, 16, 16, 16, 16, 14, 11], 'times': [0, 1109.2, 2346.9, 3595.1, 4902.0, 6196.3, 7508.5], 'country': 'POR'}, {'name': 'ROURA CLEMENTE Marc (ESP)', 'positions': [0, 14, 14, 14, 12, 11, 12], 'times': [0, 1072.7, 2253.5, 3509.1, 4775.7, 6087.7, 7568.3], 'country': 'ESP'}, {'name': 'CASALS MAS Eric (ESP)', 'positions': [0, 13, 13, 13, 13, 12, 13], 'times': [0, 1072.4, 2251.9, 3507.8, 4779.0, 6125.0, 7576.8], 'country': 'ESP'}, {'name': 'MARTINEZ PALOP Pablo (ESP)', 'positions': [0, 9, 10, 10, 10, 13, 14], 'times': [0, 1055.6, 2170.2, 3396.2, 4751.6, 6140.9, 7634.7], 'country': 'ESP'}, {'name': 'DE LA FUENTE Diego (ESP)', 'positions': [0, 11, 11, 11, 15, 15, 15], 'times': [0, 1066.5, 2249.7, 3486.2, 4841.0, 6312.4, 7879.9], 'country': 'ESP'}, {'name': 'AKIRTAS Khalil (MAR)', 'positions': [0, 20, 20, 17, 17, 17, 16], 'times': [0, 1138.8, 2453.4, 3778.2, 5138.6, 6538.0, 8025.4], 'country': 'MAR'}, {'name': 'CUBEIRO ROSENDE Xoel (ESP)', 'positions': [0, 17, 17, 20, 18, 18, 17], 'times': [0, 1135.0, 2432.7, 3779.5, 5140.9, 6540.1, 8026.7], 'country': 'ESP'}, {'name': 'REDONDO SORIA Iker (ESP)', 'positions': [0, 19, 19, 19, 20, 19, 18], 'times': [0, 1138.6, 2433.5, 3778.9, 5145.2, 6574.3, 8088.9], 'country': 'ESP'}, {'name': 'CABRILLO Norberto (ESP)', 'positions': [0, 18, 17, 18, 19, 20, 19], 'times': [0, 1136.8, 2432.7, 3778.6, 5143.0, 6575.0, 8092.7], 'country': 'ESP'}, {'name': 'NIEVAS GARCIA Lucas (ESP)', 'positions': [0, 15, 15, 15, 14, 16, 20], 'times': [0, 1078.0, 2253.6, 3510.7, 4828.2, 6331.0, 8205.7], 'country': 'ESP'}, {'name': 'OUARDI Noham (MAR)', 'positions': [0, 21, 21, 21, 21, 21, 21], 'times': [0, 1228.9, 2560.8, 3924.0, 5331.6, 6768.2, 8265.1], 'country': 'MAR'}];
+        atletas.forEach(atleta => {
+            atleta.cor = `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.8)`;
+        });
+
+        const labels = ["Start", "1666m", "3333m", "5000m", "6666m", "8333m", "Finish"];
+
+        const ctx = document.getElementById('voltasChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: atletas.map((atleta, index) => ({
+                    label: atleta.name,
+                    data: atleta.positions,
+                    tempos: atleta.times,
+                    borderColor: atleta.cor,
+                    backgroundColor: atleta.cor,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    fill: false,
+                    tension: 0.1,
+                    hidden: index >= 10
+                }))
+            },
+            options: {
+                responsive: true,
+                layout: {
+                    padding: {
+                        top: 20
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.dataset.label || '';
+                                const value = context.raw || 0;
+                                const tempo = context.dataset.tempos[context.dataIndex];
+                                const splitTime = tempo - context.dataset.tempos[context.dataIndex-1];
+                                return `${label}: position # ${value} | ${formatTime(tempo)} | split: ${formatTime(splitTime)}`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'IBIZA-RESULTS10KMM-AQUA-JUN'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        reverse: true,
+                        min: 0,
+                        max: atletas.length,
+                        title: {
+                            display: true,
+                            text: 'Position'
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Checkpoint'
+                        }
+                    }
+                }
+            }
+        });
+
+        const updateChart = () => {
+            atletas.forEach((_, index) => {
+                const meta = chart.getDatasetMeta(index);
+                meta.hidden = !document.getElementById(`atleta${index}`).checked;
+            });
+            chart.update();
+        };
+
+        const filterAthletes = () => {
+            const term = document.getElementById('searchBox').value.toLowerCase();
+            const boxes = document.querySelectorAll('.checkbox-container');
+            boxes.forEach(box => {
+                const label = box.querySelector('label');
+                box.style.display = label.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        };
+
+        const checkboxesContainer = document.getElementById('checkboxes');
+        atletas.forEach((atleta, index) => {
+            const checkboxContainer = document.createElement('div');
+            checkboxContainer.className = 'checkbox-container';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `atleta${index}`;
+            checkbox.checked = index < 10;
+            checkbox.addEventListener('change', updateChart);
+
+            const label = document.createElement('label');
+            label.htmlFor = `atleta${index}`;
+            label.textContent = atleta.name;
+            label.style.color = atleta.cor;
+            label.style.fontWeight = 'bold';
+            label.style.textShadow = '1px 1px 2px #00000033';
+
+            checkboxContainer.appendChild(checkbox);
+            checkboxContainer.appendChild(label);
+            checkboxesContainer.appendChild(checkboxContainer);
+        });
+
+        document.getElementById('searchBox').addEventListener('input', filterAthletes);
+        updateChart();
+    </script>
+</body>
+</html>
