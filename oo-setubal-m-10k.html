@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10 km MALE SETUBAL</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #legenda {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 250px;
+        }
+        .chart-container {
+            width: calc(100% - 300px);
+            margin-right: 300px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .checkbox-container input {
+            margin-right: 8px;
+        }
+        .search-box {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 5px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                width: 100%;
+                margin-right: 0;
+            }
+            #legenda {
+                position: static;
+                width: auto;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>10 km MALE SETUBAL</h1>
+    <div class="chart-container">
+        <canvas id="voltasChart"></canvas>
+    </div>
+    <div id="legenda">
+        <h3>Athletes:</h3>
+        <input type="text" id="searchBox" class="search-box" placeholder="Search...">
+        <div id="checkboxes"></div>
+    </div>
+
+    <script>
+        const formatTime = (seconds) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = (seconds % 60).toFixed(1);
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.padStart(4, '0')}`;
+            } else {
+                return `${minutes}:${secs.padStart(4, '0')}`;
+            }
+        };
+
+        const atletas = [{'name': 'OLIVIER Marc-Antoine (FRA)', 'positions': [0, 1, 11, 7, 6, 3, 1], 'times': [0, 1090.8, 2241.9, 3390.7, 4538.2, 5687.1, 6808.1], 'country': 'FRA'}, {'name': 'VELLY Sacha (FRA)', 'positions': [0, 3, 4, 2, 3, 5, 2], 'times': [0, 1092.8, 2237.9, 3386.4, 4536.6, 5687.4, 6809.8], 'country': 'FRA'}, {'name': 'KLEMET Oliver (GER)', 'positions': [0, 9, 5, 10, 14, 6, 3], 'times': [0, 1096.7, 2238.1, 3392.1, 4542.9, 5687.6, 6813.6], 'country': 'GER'}, {'name': 'FONTAINE Logan (FRA)', 'positions': [0, 2, 14, 6, 5, 8, 4], 'times': [0, 1092.1, 2243.4, 3389.5, 4538.1, 5688.8, 6815.2], 'country': 'FRA'}, {'name': 'RASOVSZKY Kristof (HUN)', 'positions': [0, 4, 6, 4, 1, 1, 5], 'times': [0, 1093.0, 2239.2, 3388.0, 4534.2, 5685.2, 6815.3], 'country': 'HUN'}, {'name': 'WELLBROCK Florian (GER)', 'positions': [0, 6, 2, 1, 2, 2, 6], 'times': [0, 1093.8, 2236.5, 3385.1, 4536.3, 5685.4, 6816.5], 'country': 'GER'}, {'name': 'BETLEHEM David (HUN)', 'positions': [0, 5, 1, 3, 4, 3, 7], 'times': [0, 1093.2, 2236.3, 3387.8, 4536.8, 5687.1, 6816.9], 'country': 'HUN'}, {'name': 'VERANI Dario (ITA)', 'positions': [0, 17, 19, 17, 15, 11, 8], 'times': [0, 1106.2, 2245.2, 3394.8, 4543.8, 5690.2, 6817.5], 'country': 'ITA'}, {'name': 'GUIDI Marcello (ITA)', 'positions': [0, 13, 9, 9, 8, 10, 9], 'times': [0, 1101.4, 2241.7, 3391.8, 4539.3, 5689.1, 6818.0], 'country': 'ITA'}, {'name': 'WALLART Jules (FRA)', 'positions': [0, 25, 13, 11, 17, 13, 10], 'times': [0, 1109.9, 2242.0, 3392.9, 4544.7, 5690.9, 6820.0], 'country': 'FRA'}, {'name': 'FILADELLI Andrea (ITA)', 'positions': [0, 14, 7, 8, 7, 7, 11], 'times': [0, 1103.2, 2239.8, 3391.0, 4538.5, 5688.6, 6820.1], 'country': 'ITA'}, {'name': 'GRAVLEY Dylan (USA)', 'positions': [0, 27, 15, 20, 16, 12, 12], 'times': [0, 1111.5, 2243.6, 3395.7, 4543.9, 5690.8, 6820.2], 'country': 'USA'}, {'name': 'MELECCHI Matheus (BRA)', 'positions': [0, 19, 16, 19, 11, 15, 13], 'times': [0, 1107.4, 2243.8, 3395.2, 4542.0, 5691.3, 6824.1], 'country': 'BRA'}, {'name': 'ILARIO Giuseppe (ITA)', 'positions': [0, 20, 17, 14, 13, 18, 14], 'times': [0, 1107.8, 2244.6, 3393.7, 4542.4, 5692.8, 6833.9], 'country': 'ITA'}, {'name': 'DALU Fabio (ITA)', 'positions': [0, 7, 11, 11, 10, 9, 15], 'times': [0, 1094.9, 2241.9, 3392.9, 4540.3, 5689.0, 6836.1], 'country': 'ITA'}, {'name': 'KARL Luca (AUT)', 'positions': [0, 21, 28, 25, 25, 22, 16], 'times': [0, 1108.3, 2248.7, 3397.7, 4549.4, 5694.2, 6838.2], 'country': 'AUT'}, {'name': 'CLARK Charlie (USA)', 'positions': [0, 18, 21, 28, 26, 26, 17], 'times': [0, 1106.3, 2246.2, 3399.2, 4550.3, 5699.6, 6840.4], 'country': 'USA'}, {'name': 'FARINANGO David (ECU)', 'positions': [0, 16, 24, 23, 19, 20, 18], 'times': [0, 1104.6, 2246.9, 3396.7, 4545.9, 5694.1, 6842.0], 'country': 'ECU'}, {'name': 'CASO Vincenzo (ITA)', 'positions': [0, 22, 20, 24, 21, 23, 19], 'times': [0, 1108.4, 2245.5, 3397.4, 4546.4, 5695.6, 6847.2], 'country': 'ITA'}, {'name': 'VANHUYS Logan (BEL)', 'positions': [0, 28, 26, 22, 20, 17, 20], 'times': [0, 1113.9, 2247.4, 3396.1, 4546.3, 5692.7, 6848.1], 'country': 'BEL'}, {'name': 'PUSKOVITCH Ivan (USA)', 'positions': [0, 8, 3, 5, 9, 20, 21], 'times': [0, 1095.4, 2237.8, 3388.1, 4539.8, 5694.1, 6848.5], 'country': 'USA'}, {'name': 'STRAKA Martin (CZE)', 'positions': [0, 24, 18, 13, 24, 19, 22], 'times': [0, 1109.8, 2244.8, 3393.3, 4548.2, 5693.9, 6848.7], 'country': 'CZE'}, {'name': 'GAVIOLI Bernardo (BRA)', 'positions': [0, 11, 25, 15, 12, 16, 23], 'times': [0, 1097.9, 2247.2, 3394.1, 4542.3, 5692.5, 6849.0], 'country': 'BRA'}, {'name': 'TEPPER Joey (USA)', 'positions': [0, 12, 9, 16, 18, 14, 24], 'times': [0, 1099.9, 2241.7, 3394.3, 4545.2, 5691.0, 6849.5], 'country': 'USA'}, {'name': 'BRANDT DE MACEDO Leonard (BRA)', 'positions': [0, 26, 22, 21, 22, 23, 25], 'times': [0, 1111.4, 2246.3, 3396.0, 4547.3, 5695.6, 6859.3], 'country': 'BRA'}, {'name': 'TSUJIMORI Kaito (JPN)', 'positions': [0, 10, 8, 17, 23, 25, 26], 'times': [0, 1097.7, 2240.7, 3394.8, 4547.5, 5696.8, 6965.7], 'country': 'JPN'}, {'name': 'CARDOSO Diogo (POR)', 'positions': [0, 30, 29, 25, 27, 27, 27], 'times': [0, 1121.0, 2249.1, 3397.7, 4552.8, 5739.6, 7023.2], 'country': 'POR'}, {'name': 'LOUREIRO Luiz Felipe (BRA)', 'positions': [0, 15, 23, 27, 28, 28, 28], 'times': [0, 1103.8, 2246.6, 3397.9, 4553.5, 5783.1, 7097.2], 'country': 'BRA'}, {'name': 'DRUENNE Theo (MON)', 'positions': [0, 23, 27, 28, 29, 29, 29], 'times': [0, 1109.3, 2248.5, 3399.2, 4555.3, 5809.6, 7170.7], 'country': 'MON'}, {'name': 'CLUSMAN Jean-Baptiste (FRA)', 'positions': [0, 35, 32, 30, 30, 30, 30], 'times': [0, 1130.0, 2299.3, 3486.7, 4727.6, 5972.9, 7235.4], 'country': 'FRA'}, {'name': 'CAMPOS Tiago (POR)', 'positions': [0, 31, 31, 33, 32, 31, 31], 'times': [0, 1122.6, 2292.7, 3500.4, 4746.3, 5996.4, 7246.0], 'country': 'POR'}, {'name': 'CHO Cheng-Chi (TPE)', 'positions': [0, 32, 30, 31, 33, 32, 32], 'times': [0, 1123.1, 2274.4, 3489.0, 4749.6, 5998.4, 7247.6], 'country': 'TPE'}, {'name': 'OBELE CISNEROS Diego (MEX)', 'positions': [0, 36, 35, 32, 31, 33, 33], 'times': [0, 1132.5, 2311.0, 3497.9, 4743.5, 5999.7, 7256.7], 'country': 'MEX'}, {'name': 'BREYTENBACH Ruan (RSA)', 'positions': [0, 34, 34, 36, 36, 36, 34], 'times': [0, 1127.5, 2310.9, 3528.8, 4845.7, 6207.6, 7561.9], 'country': 'RSA'}, {'name': 'SCHOUTEN Marcel (NED)', 'positions': [0, 33, 33, 34, 35, 35, 35], 'times': [0, 1125.6, 2309.2, 3524.3, 4843.6, 6205.6, 7563.8], 'country': 'NED'}, {'name': 'BRISENO GONZALEZ Raul Al (VEN)', 'positions': [0, 29, 36, 35, 34, 34, 36], 'times': [0, 1118.6, 2318.1, 3527.3, 4841.5, 6204.1, 7564.0], 'country': 'VEN'}, {'name': 'HUNG Pen-Han (TPE)', 'positions': [0, 38, 38, 38, 38, 37, 37], 'times': [0, 1151.8, 2390.2, 3644.7, 4964.2, 6287.4, 7655.2], 'country': 'TPE'}, {'name': 'ZHANG Jinhou (CHN)', 'positions': [0, 40, 40, 40, 39, 39, 38], 'times': [0, 1161.8, 2455.3, 3761.9, 5052.6, 6368.0, 7683.6], 'country': 'CHN'}, {'name': 'SIN Chin Ting Keith (HKG)', 'positions': [0, 42, 42, 39, 40, 40, 39], 'times': [0, 1173.7, 2457.8, 3759.7, 5054.7, 6370.0, 7695.5], 'country': 'HKG'}, {'name': 'MORENO GUTIERREZ Raul (MEX)', 'positions': [0, 37, 37, 37, 37, 38, 40], 'times': [0, 1136.4, 2357.1, 3597.0, 4938.8, 6330.0, 7717.7], 'country': 'MEX'}, {'name': 'CHAN Tsun Hin (HKG)', 'positions': [0, 43, 43, 43, 41, 41, 41], 'times': [0, 1194.6, 2492.3, 3778.4, 5065.6, 6425.1, 7869.9], 'country': 'HKG'}, {'name': 'SU Bo Ling (TPE)', 'positions': [0, 41, 41, 42, 42, 42, 42], 'times': [0, 1163.5, 2457.2, 3762.9, 5077.6, 6491.0, 7948.9], 'country': 'TPE'}, {'name': 'CHO Pei-Chi (TPE)', 'positions': [0, 39, 39, 41, 42, 42, 43], 'times': [0, 1161.3, 2454.9, 3762.7, 5077.6, 6491.0, 7970.6], 'country': 'TPE'}];
+        atletas.forEach(atleta => {
+            atleta.cor = `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.8)`;
+        });
+
+        const labels = ["Start", "1666m", "3333m", "5000m", "6666m", "8333m", "Finish"];
+
+        const ctx = document.getElementById('voltasChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: atletas.map((atleta, index) => ({
+                    label: atleta.name,
+                    data: atleta.positions,
+                    tempos: atleta.times,
+                    borderColor: atleta.cor,
+                    backgroundColor: atleta.cor,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    fill: false,
+                    tension: 0.1,
+                    hidden: index >= 10
+                }))
+            },
+            options: {
+                responsive: true,
+                layout: {
+                    padding: {
+                        top: 20
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.dataset.label || '';
+                                const value = context.raw || 0;
+                                const tempo = context.dataset.tempos[context.dataIndex];
+                                const splitTime = tempo - context.dataset.tempos[context.dataIndex-1];
+                                return `${label}: position # ${value} | ${formatTime(tempo)} | split: ${formatTime(splitTime)}`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: '10 km MALE SETUBAL'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        reverse: true,
+                        min: 0,
+                        max: atletas.length,
+                        title: {
+                            display: true,
+                            text: 'Position'
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Checkpoint'
+                        }
+                    }
+                }
+            }
+        });
+
+        const updateChart = () => {
+            atletas.forEach((_, index) => {
+                const meta = chart.getDatasetMeta(index);
+                meta.hidden = !document.getElementById(`atleta${index}`).checked;
+            });
+            chart.update();
+        };
+
+        const filterAthletes = () => {
+            const term = document.getElementById('searchBox').value.toLowerCase();
+            const boxes = document.querySelectorAll('.checkbox-container');
+            boxes.forEach(box => {
+                const label = box.querySelector('label');
+                box.style.display = label.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        };
+
+        const checkboxesContainer = document.getElementById('checkboxes');
+        atletas.forEach((atleta, index) => {
+            const checkboxContainer = document.createElement('div');
+            checkboxContainer.className = 'checkbox-container';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `atleta${index}`;
+            checkbox.checked = index < 10;
+            checkbox.addEventListener('change', updateChart);
+
+            const label = document.createElement('label');
+            label.htmlFor = `atleta${index}`;
+            label.textContent = atleta.name;
+            label.style.color = atleta.cor;
+            label.style.fontWeight = 'bold';
+            label.style.textShadow = '1px 1px 2px #00000033';
+
+            checkboxContainer.appendChild(checkbox);
+            checkboxContainer.appendChild(label);
+            checkboxesContainer.appendChild(checkboxContainer);
+        });
+
+        document.getElementById('searchBox').addEventListener('input', filterAthletes);
+        updateChart();
+    </script>
+</body>
+</html>
