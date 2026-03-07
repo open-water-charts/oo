@@ -334,6 +334,11 @@
   </div>
 
   <div class="card table-section" style="margin-top:16px">
+    <div class="card-title">Ranking por parcial — evolução de posições ao longo da prova</div>
+    <div style="position:relative;height:420px"><canvas id="rankChart"></canvas></div>
+  </div>
+
+  <div class="card table-section" style="margin-top:16px">
     <div class="card-title">Tabela de Parciais Completa</div>
     <div id="splits-table"></div>
   </div>
@@ -454,6 +459,13 @@ function timeToSec(t) {
   return parseFloat(p[0])*60 + parseFloat(p[1]);
 }
 
+function secToMMSS(s) {
+  if(s==null||isNaN(s)) return '—';
+  const m = Math.floor(s/60);
+  const sec = s - m*60;
+  return `${m}:${sec.toFixed(2).padStart(5,'0')}`;
+}
+
 function secToDisplay(s) {
   if(s==null||isNaN(s)) return '—';
   return s.toFixed(2)+'s';
@@ -462,8 +474,13 @@ function secToDisplay(s) {
 function totalDisplay(t) { return t; }
 
 function getClean(splits) {
-  // replace null with estimated
   return splits.map((v,i)=> v!=null ? v : null);
+}
+
+// Tempo acumulado em cada 50m
+function cumulativeTimes(splits) {
+  let acc = 0;
+  return splits.map(v => { if(v==null) return null; acc+=v; return parseFloat(acc.toFixed(2)); });
 }
 
 function halfTimes(splits) {
@@ -481,7 +498,7 @@ function isNegative(splits) {
 let mode = 'categoria';
 let selectedCats = new Set(CATEGORIES);
 let selectedAth = ATHLETES[0];
-let mainChart = null, paceChart = null;
+let mainChart = null, paceChart = null, rankChart = null;
 
 function setMode(m) {
   mode = m;
@@ -531,6 +548,7 @@ function render() {
 function destroyCharts() {
   if(mainChart) { mainChart.destroy(); mainChart=null; }
   if(paceChart) { paceChart.destroy(); paceChart=null; }
+  if(rankChart) { rankChart.destroy(); rankChart=null; }
 }
 
 // ---- CATEGORY MODE ----
@@ -593,7 +611,7 @@ function renderCategoryMode() {
   // Pace chart — grouped bar first vs second half
   const paceData = athletes.map(a => {
     const {first,second} = halfTimes(a.splits);
-    return { name: a.name.split(' ')[0], first: parseFloat(first.toFixed(1)), second: parseFloat(second.toFixed(1)) };
+    return { name: a.name.split(' ')[0], first: parseFloat(first.toFixed(2)), second: parseFloat(second.toFixed(2)) };
   });
   const ctx2 = document.getElementById('paceChart').getContext('2d');
   paceChart = new Chart(ctx2, {
@@ -612,15 +630,18 @@ function renderCategoryMode() {
         tooltip:{
           backgroundColor:'#0e1220', borderColor:'#1e2840', borderWidth:1,
           titleColor:'#00e5ff', bodyColor:'#e8eaf0',
+          callbacks:{ label: item => ` ${item.dataset.label}: ${secToMMSS(item.parsed.y)}` }
         }
       },
       scales: {
         x:{ grid:{color:'#1e2840'}, ticks:{color:'#6b7a99', font:{family:'DM Mono',size:9}, maxRotation:45} },
-        y:{ grid:{color:'#1e2840'}, ticks:{color:'#6b7a99', font:{family:'DM Mono',size:10}} }
+        y:{ grid:{color:'#1e2840'}, ticks:{color:'#6b7a99', font:{family:'DM Mono',size:10},
+            callback: v => secToMMSS(v) } }
       }
     }
   });
 
+  renderRankChart(athletes);
   renderStatsCards(athletes);
   renderSplitsTable(athletes);
 }
@@ -701,18 +722,146 @@ function renderAthleteMode() {
         tooltip:{
           backgroundColor:'#0e1220', borderColor:'#1e2840', borderWidth:1,
           titleColor:'#00e5ff', bodyColor:'#e8eaf0',
-          callbacks:{ label: item => ` ${item.parsed.x.toFixed(2)}s` }
-        }
+          callbacks:{ label: item => ` ${secToMMSS(item.parsed.x)}` }
+        },
+        datalabels: false
       },
       scales: {
-        x:{grid:{color:'#1e2840'}, ticks:{color:'#6b7a99', font:{family:'DM Mono',size:10}}},
+        x:{grid:{color:'#1e2840'}, ticks:{color:'#6b7a99', font:{family:'DM Mono',size:10}, callback: v => secToMMSS(v)}},
         y:{grid:{color:'#1e2840'}, ticks:{color:'#6b7a99', font:{family:'DM Mono',size:11}}}
       }
     }
   });
 
+  renderRankChart([a]);
   renderStatsCards([a]);
   renderSplitsTable([a]);
+}
+
+function renderRankChart(athletes) {
+  const ctx = document.getElementById('rankChart').getContext('2d');
+
+  // Para cada parcial (50m a 800m), calcular o acumulado de cada atleta e seu ranking naquele ponto
+  // Eixo Y = posição (1 = líder), eixo X = distância
+  // Cada linha = um atleta
+
+  const datasets = athletes.map((a, i) => {
+    const cumul = cumulativeTimes(a.splits); // tempo acumulado em cada 50m
+    const interp = new Set(a.interpolated || []);
+
+    // ranking será preenchido depois de cruzar todos os atletas
+    return {
+      athleteIdx: i,
+      name: a.name,
+      cumul,
+      interp,
+      color: PALETTE[i % PALETTE.length],
+    };
+  });
+
+  // Para cada ponto de 50m, ordenar atletas por tempo acumulado (menor = melhor = rank 1)
+  const rankData = datasets.map(d => ({ ...d, ranks: [] }));
+  for(let pt = 0; pt < 16; pt++) {
+    const atPt = rankData
+      .map((d, i) => ({ i, val: d.cumul[pt] }))
+      .filter(x => x.val != null)
+      .sort((a, b) => a.val - b.val);
+    atPt.forEach((x, rank) => { rankData[x.i].ranks[pt] = rank + 1; });
+    // atletas sem dado nesse ponto ficam com null
+    rankData.forEach(d => { if(d.ranks[pt] === undefined) d.ranks[pt] = null; });
+  }
+
+  const chartDatasets = rankData.map(d => ({
+    label: d.name,
+    data: d.ranks,
+    borderColor: d.color,
+    backgroundColor: d.color + '22',
+    borderWidth: 2,
+    pointRadius: d.ranks.map((_, idx) => d.interp.has(idx) ? 6 : 4),
+    pointStyle: d.ranks.map((_, idx) => d.interp.has(idx) ? 'triangle' : 'circle'),
+    pointBackgroundColor: d.ranks.map((_, idx) => d.interp.has(idx) ? '#fdcb6e' : d.color),
+    pointHoverRadius: 7,
+    tension: 0.3,
+    spanGaps: true,
+  }));
+
+  // plugin para mostrar tag de tempo acumulado em cada ponto ao hover
+  rankChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: LABELS_50, datasets: chartDatasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0e1220',
+          borderColor: '#1e2840',
+          borderWidth: 1,
+          titleColor: '#00e5ff',
+          bodyColor: '#e8eaf0',
+          callbacks: {
+            title: items => `${items[0].label}m`,
+            label: item => {
+              const d = rankData[item.datasetIndex];
+              const cumVal = d.cumul[item.dataIndex];
+              const interpMark = d.interp.has(item.dataIndex) ? ' *' : '';
+              const splitVal = athletes[item.datasetIndex].splits[item.dataIndex];
+              return ` ${item.dataset.label}  →  ${item.parsed.y}º  |  acum: ${secToMMSS(cumVal)}  |  parcial: ${splitVal != null ? splitVal.toFixed(2)+'s' : '—'}${interpMark}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#1e2840' },
+          ticks: { color: '#6b7a99', font: { family: 'DM Mono', size: 10 } }
+        },
+        y: {
+          reverse: true,
+          min: 1,
+          grid: { color: '#1e2840' },
+          ticks: {
+            color: '#6b7a99',
+            font: { family: 'DM Mono', size: 11 },
+            stepSize: 1,
+            callback: v => Number.isInteger(v) ? `${v}º` : ''
+          },
+          title: { display: true, text: 'posição', color: '#6b7a99', font: { family: 'DM Mono', size: 10 } }
+        }
+      }
+    },
+    plugins: [{
+      id: 'splitLabels',
+      afterDatasetsDraw(chart) {
+        const {ctx, data, scales} = chart;
+        // Mostrar o tempo acumulado do líder em cada ponto
+        ctx.save();
+        data.labels.forEach((lbl, ptIdx) => {
+          // encontrar dataset com rank 1 nesse ponto
+          let leaderDs = null, leaderRank = Infinity;
+          rankData.forEach((d, di) => {
+            if(d.ranks[ptIdx] != null && d.ranks[ptIdx] < leaderRank) {
+              leaderRank = d.ranks[ptIdx];
+              leaderDs = { di, d };
+            }
+          });
+          if(!leaderDs) return;
+          const meta = chart.getDatasetMeta(leaderDs.di);
+          if(!meta.data[ptIdx]) return;
+          const pt = meta.data[ptIdx];
+          const cumVal = leaderDs.d.cumul[ptIdx];
+          if(cumVal == null) return;
+          const txt = secToMMSS(cumVal);
+          ctx.font = '9px DM Mono, monospace';
+          ctx.fillStyle = 'rgba(0,229,255,0.7)';
+          ctx.textAlign = 'center';
+          ctx.fillText(txt, pt.x, pt.y - 10);
+        });
+        ctx.restore();
+      }
+    }]
+  });
 }
 
 function renderStatsCards(athletes) {
