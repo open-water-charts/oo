@@ -336,6 +336,8 @@ function setupRace(resetFilters=false) {
       }
     });
     const wps = Object.entries(origDistMap).map(([d, t]) => ({dist:Number(d), t})).sort((x,y) => x.dist - y.dist);
+    // Ensure origin point exists so even single-waypoint athletes (50m) have a segment
+    if (wps.length > 0 && wps[0].dist > 0) wps.unshift({dist:0, t:0});
     const distMap = {}, splitMap = {};
     wps.forEach(w => distMap[w.dist] = w.t);
     Object.entries(a.sp || {}).forEach(([dist, t]) => { const v = timeToSec(t); if (v != null) splitMap[Number(dist)] = v; });
