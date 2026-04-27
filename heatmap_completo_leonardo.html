@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classificação Leonardo Macedo — Análise completa</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#0b0e13;color:#d8dae0;min-height:100vh;padding:2.5rem 1.5rem}
+.page{max-width:980px;margin:0 auto}
+h1{font-size:1.5rem;font-weight:700;color:#fff;text-align:center;margin-bottom:0.3rem;letter-spacing:-0.02em}
+.subtitle{font-size:0.82rem;color:#5f6475;text-align:center;max-width:680px;margin:0 auto 1.5rem;line-height:1.6}
+.pts-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:600px;margin:0 auto 2rem}
+.pts-card{background:#14181f;border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px 8px;text-align:center}
+.pts-card .nm{font-size:0.68rem;color:#5f6475;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.04em}
+.pts-card .vl{font-size:1.15rem;font-weight:600;color:#c0c3cc}
+.pts-card.hl{background:rgba(29,158,117,0.1);border-color:rgba(29,158,117,0.25)}
+.pts-card.hl .vl{color:#1D9E75}
+.section-title{font-size:1.05rem;font-weight:600;color:#fff;margin-bottom:0.2rem;text-align:center}
+.section-sub{font-size:0.78rem;color:#5f6475;text-align:center;margin-bottom:1.25rem;line-height:1.5}
+.heatmap-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2.5rem}
+.hm-card{background:#13171e;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:1rem 1rem 0.75rem;position:relative}
+.hm-card .hm-title{font-size:0.85rem;font-weight:600;margin-bottom:0.15rem}
+.hm-card .hm-desc{font-size:0.72rem;color:#5f6475;margin-bottom:0.75rem}
+.hm-card canvas{display:block;width:100%;cursor:crosshair}
+.hm-legend{display:flex;gap:12px;margin-top:0.5rem;font-size:0.68rem;color:#5f6475}
+.hm-legend span{display:flex;align-items:center;gap:4px}
+.lb{width:8px;height:8px;border-radius:2px}
+.curve-card{background:#13171e;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:1.25rem 1.5rem 1rem;margin-bottom:2rem}
+.curve-card canvas{display:block;width:100%;cursor:crosshair}
+.curve-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:0.75rem;font-size:0.72rem;color:#5f6475}
+.curve-legend span{display:flex;align-items:center;gap:5px}
+.cl{width:16px;height:3px;border-radius:1px}
+.tooltip{position:absolute;pointer-events:none;background:#1c2130;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 10px;font-size:0.72rem;color:#d8dae0;display:none;white-space:nowrap;z-index:20}
+.footer{text-align:center;font-size:0.65rem;color:#2e3240;margin-top:1rem}
+.rival-color{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+@media(max-width:700px){
+  .heatmap-grid{grid-template-columns:1fr}
+  .pts-row{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Cenários de classificação — Leonardo Macedo</h1>
+<p class="subtitle">Campeonato em 2 etapas · 2 classificados · Pontuação por colocação geral (1º = 800 pts … 99º = 1 pt)</p>
+
+<div class="pts-row">
+  <div class="pts-card"><div class="nm">Victor</div><div class="vl">250</div></div>
+  <div class="pts-card"><div class="nm">Matheus</div><div class="vl">104</div></div>
+  <div class="pts-card"><div class="nm">Bernardo</div><div class="vl">86</div></div>
+  <div class="pts-card"><div class="nm">Luiz Felipe</div><div class="vl">78</div></div>
+  <div class="pts-card hl"><div class="nm">Leonardo</div><div class="vl">72</div></div>
+</div>
+
+<p class="section-title">Heatmaps — Leonardo vs cada rival</p>
+<p class="section-sub">Eixo X = posição geral do Leonardo na 2ª etapa · Eixo Y = posição geral do rival · Passe o mouse para detalhes</p>
+
+<div class="heatmap-grid">
+  <div class="hm-card">
+    <p class="hm-title"><span class="rival-color" style="background:#E24B4A"></span>Leonardo vs Victor (250 pts)</p>
+    <p class="hm-desc">Praticamente impossível — Victor domina em quase todo cenário</p>
+    <div style="position:relative"><canvas id="hm0" width="440" height="380"></canvas><div class="tooltip" id="tip0"></div></div>
+    <div class="hm-legend"><span><span class="lb" style="background:#1D9E75"></span>Leo vence</span><span><span class="lb" style="background:#E24B4A"></span>Victor vence</span></div>
+  </div>
+  <div class="hm-card">
+    <p class="hm-title"><span class="rival-color" style="background:#EF9F27"></span>Leonardo vs Matheus (104 pts)</p>
+    <p class="hm-desc">Rival decisivo — define se Leonardo classifica ou não</p>
+    <div style="position:relative"><canvas id="hm1" width="440" height="380"></canvas><div class="tooltip" id="tip1"></div></div>
+    <div class="hm-legend"><span><span class="lb" style="background:#1D9E75"></span>Leo vence</span><span><span class="lb" style="background:#E24B4A"></span>Mat vence</span></div>
+  </div>
+  <div class="hm-card">
+    <p class="hm-title"><span class="rival-color" style="background:#7F77DD"></span>Leonardo vs Bernardo (86 pts)</p>
+    <p class="hm-desc">Margem mais confortável — 14 pontos de vantagem para Bernardo</p>
+    <div style="position:relative"><canvas id="hm2" width="440" height="380"></canvas><div class="tooltip" id="tip2"></div></div>
+    <div class="hm-legend"><span><span class="lb" style="background:#1D9E75"></span>Leo vence</span><span><span class="lb" style="background:#E24B4A"></span>Ber vence</span></div>
+  </div>
+  <div class="hm-card">
+    <p class="hm-title"><span class="rival-color" style="background:#378ADD"></span>Leonardo vs Luiz Felipe (78 pts)</p>
+    <p class="hm-desc">Diferença de apenas 6 pontos — mais fácil de superar</p>
+    <div style="position:relative"><canvas id="hm3" width="440" height="380"></canvas><div class="tooltip" id="tip3"></div></div>
+    <div class="hm-legend"><span><span class="lb" style="background:#1D9E75"></span>Leo vence</span><span><span class="lb" style="background:#E24B4A"></span>LF vence</span></div>
+  </div>
+</div>
+
+<p class="section-title">Curvas de corte sobrepostas</p>
+<p class="section-sub">A posição máxima que Leonardo pode ter na 2ª etapa para vencer cada rival.<br>Quanto mais à direita/abaixo a curva, mais fácil é superar o rival.</p>
+
+<div class="curve-card">
+  <div style="position:relative">
+    <canvas id="curves" width="920" height="450"></canvas>
+    <div class="tooltip" id="tipC"></div>
+  </div>
+  <div class="curve-legend">
+    <span><span class="cl" style="background:#E24B4A"></span>vs Victor (250)</span>
+    <span><span class="cl" style="background:#EF9F27"></span>vs Matheus (104)</span>
+    <span><span class="cl" style="background:#7F77DD"></span>vs Bernardo (86)</span>
+    <span><span class="cl" style="background:#378ADD"></span>vs Luiz Felipe (78)</span>
+    <span style="color:#1D9E75">▼ Abaixo da curva = Leonardo vence o duelo</span>
+  </div>
+</div>
+
+<p class="footer">Gerado para análise de classificação · Pontuação conforme tabela oficial do campeonato</p>
+
+</div>
+
+<script>
+const PT=[800,700,600,550,500,450,400,350,300,250,200,190,180,170,160,150,140,130,120,110,108,106,104,102,100,98,96,94,92,90,88,86,84,82,80,78,76,74,72,70,68,66,64,62,60,58,56,54,52,50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+function pts(pl){return PT[Math.min(Math.max(pl,1),99)-1]}
+const E1_LEO=72;
+
+const rivals=[
+  {name:'Victor',short:'Vic',e1:250,color:'#E24B4A'},
+  {name:'Matheus',short:'Mat',e1:104,color:'#EF9F27'},
+  {name:'Bernardo',short:'Ber',e1:86,color:'#7F77DD'},
+  {name:'Luiz Felipe',short:'LF',e1:78,color:'#378ADD'}
+];
+
+const GREEN='#1D9E75',RED='#E24B4A';
+const BG='#13171e';
+const GRID='rgba(255,255,255,0.05)';
+const TCOL='rgba(255,255,255,0.35)';
+const TMAIN='#b0b3bc';
+const DASH='rgba(255,255,255,0.3)';
+
+// precompute cutoffs for each rival
+const allCutoffs=rivals.map(r=>{
+  const arr=[];
+  for(let rp=1;rp<=99;rp++){
+    const rt=r.e1+pts(rp);
+    let maxL=-1;
+    for(let l=1;l<=99;l++){if(E1_LEO+pts(l)>rt)maxL=l}
+    arr.push(maxL);
+  }
+  return arr;
+});
+
+// ====== HEATMAPS ======
+rivals.forEach((rival,idx)=>{
+  const cv=document.getElementById('hm'+idx);
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  const mg={top:14,right:14,bottom:42,left:48};
+  const pw=W-mg.left-mg.right,ph=H-mg.top-mg.bottom;
+  const cw=pw/99,ch=ph/99;
+
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+
+  for(let lx=0;lx<99;lx++){
+    const leo=lx+1,lt=E1_LEO+pts(leo);
+    for(let ry=0;ry<99;ry++){
+      const rp=ry+1,rt=rival.e1+pts(rp);
+      const ok=lt>rt;
+      ctx.fillStyle=ok?GREEN:RED;
+      ctx.globalAlpha=ok?0.5:0.2;
+      ctx.fillRect(mg.left+lx*cw,mg.top+ry*ch,Math.ceil(cw),Math.ceil(ch));
+    }
+  }
+  ctx.globalAlpha=1;
+
+  // cutoff line
+  const co=allCutoffs[idx];
+  ctx.beginPath();ctx.setLineDash([4,3]);ctx.strokeStyle=DASH;ctx.lineWidth=1.2;
+  let st=false;
+  for(let m=0;m<99;m++){
+    if(co[m]>0){
+      const x=mg.left+(co[m]-0.5)*cw,y=mg.top+(m+0.5)*ch;
+      if(!st){ctx.moveTo(x,y);st=true}else ctx.lineTo(x,y);
+    }
+  }
+  ctx.stroke();ctx.setLineDash([]);
+
+  // axes
+  ctx.fillStyle=TCOL;ctx.font='10px DM Sans,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  [1,20,40,60,80,99].forEach(t=>{ctx.fillText(t+'º',mg.left+(t-0.5)*cw,mg.top+ph+5)});
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  [1,20,40,60,80,99].forEach(t=>{ctx.fillText(t+'º',mg.left-6,mg.top+(t-0.5)*ch)});
+
+  ctx.fillStyle=TMAIN;ctx.font='500 10px DM Sans,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('Leonardo (2ª etapa)',mg.left+pw/2,H-12);
+  ctx.save();ctx.translate(10,mg.top+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='middle';ctx.fillText(rival.name+' (2ª etapa)',0,0);ctx.restore();
+
+  // tooltip
+  const tip=document.getElementById('tip'+idx);
+  cv.addEventListener('mousemove',e=>{
+    const rect=cv.getBoundingClientRect();
+    const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+    const scX=W/rect.width,scY=H/rect.height;
+    const cx=(sx*scX-mg.left)/cw,cy=(sy*scY-mg.top)/ch;
+    if(cx>=0&&cx<99&&cy>=0&&cy<99){
+      const leo=Math.floor(cx)+1,rp=Math.floor(cy)+1;
+      const lt=E1_LEO+pts(leo),rt=rival.e1+pts(rp),ok=lt>rt;
+      tip.style.display='block';
+      tip.style.left=Math.min(sx+12,rect.width-180)+'px';
+      tip.style.top=(sy-10)+'px';
+      tip.innerHTML=`Leo ${leo}º (${lt}) vs ${rival.short} ${rp}º (${rt}) → <b style="color:${ok?GREEN:RED}">${ok?'Leo vence':''+rival.short+' vence'}</b>`;
+    }else tip.style.display='none';
+  });
+  cv.addEventListener('mouseleave',()=>{tip.style.display='none'});
+});
+
+// ====== UNIFIED CURVES ======
+(function(){
+  const cv=document.getElementById('curves');
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  const mg={top:20,right:30,bottom:50,left:60};
+  const pw=W-mg.left-mg.right,ph=H-mg.top-mg.bottom;
+
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+
+  function xP(v){return mg.left+(v-1)/98*pw}
+  function yP(v){return mg.top+(v-1)/98*ph}
+
+  // grid
+  ctx.strokeStyle=GRID;ctx.lineWidth=0.5;
+  [1,10,20,30,40,50,60,70,80,90,99].forEach(t=>{
+    ctx.beginPath();ctx.moveTo(xP(t),mg.top);ctx.lineTo(xP(t),mg.top+ph);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(mg.left,yP(t));ctx.lineTo(mg.left+pw,yP(t));ctx.stroke();
+  });
+
+  // fill areas (lightest first)
+  const fillAlpha=[0.04,0.06,0.08,0.10];
+  for(let i=rivals.length-1;i>=0;i--){
+    const co=allCutoffs[i];
+    ctx.beginPath();
+    let fv=-1;
+    for(let m=1;m<=99;m++){
+      if(co[m-1]>0){
+        if(fv<0){fv=m;ctx.moveTo(xP(m),yP(co[m-1]))}
+        else ctx.lineTo(xP(m),yP(co[m-1]));
+      }
+    }
+    if(fv>0){
+      ctx.lineTo(xP(99),yP(1));ctx.lineTo(xP(fv),yP(1));ctx.closePath();
+      ctx.fillStyle=rivals[i].color;ctx.globalAlpha=fillAlpha[i];ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+
+  // draw curves
+  rivals.forEach((rival,i)=>{
+    const co=allCutoffs[i];
+    ctx.beginPath();let st=false;
+    for(let m=1;m<=99;m++){
+      if(co[m-1]>0){
+        const x=xP(m),y=yP(co[m-1]);
+        if(!st){ctx.moveTo(x,y);st=true}else ctx.lineTo(x,y);
+      }
+    }
+    ctx.strokeStyle=rival.color;ctx.lineWidth=2.5;ctx.stroke();
+
+    // label at end of curve
+    let lastM=-1;
+    for(let m=99;m>=1;m--){if(co[m-1]>0){lastM=m;break}}
+    if(lastM>0){
+      const x=xP(lastM),y=yP(co[lastM-1]);
+      ctx.fillStyle=rival.color;ctx.font='600 11px DM Sans,sans-serif';
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText(rival.name+' ('+rival.e1+')',x+8,y);
+    }
+  });
+
+  // reference dots on Matheus curve (the key rival)
+  const matCo=allCutoffs[1];
+  ctx.font='10px DM Sans,sans-serif';
+  [[10,matCo[9]],[25,matCo[24]],[40,matCo[39]],[60,matCo[59]],[80,matCo[79]]].forEach(([m,l])=>{
+    if(l>0){
+      const x=xP(m),y=yP(l);
+      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=rivals[1].color;ctx.fill();
+      ctx.fillStyle=TMAIN;ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText('≤'+l+'º',x,y-6);
+    }
+  });
+
+  // axes
+  ctx.fillStyle=TCOL;ctx.font='10px DM Sans,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  [1,10,20,30,40,50,60,70,80,90,99].forEach(t=>{ctx.fillText(t+'º',xP(t),mg.top+ph+6)});
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  [1,10,20,30,40,50,60,70,80,90,99].forEach(t=>{ctx.fillText(t+'º',mg.left-8,yP(t))});
+
+  ctx.fillStyle=TMAIN;ctx.font='500 12px DM Sans,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('Posição geral do rival — 2ª etapa',mg.left+pw/2,H-14);
+  ctx.save();ctx.translate(14,mg.top+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='middle';ctx.fillText('Posição máxima do Leonardo para classificar',0,0);ctx.restore();
+
+  // zone label
+  ctx.font='500 13px DM Sans,sans-serif';ctx.globalAlpha=0.35;ctx.textAlign='center';
+  ctx.fillStyle=GREEN;ctx.fillText('Classifica (vs todos)',xP(75),yP(12));
+  ctx.fillStyle=RED;ctx.fillText('Não classifica (vs nenhum)',xP(18),yP(85));
+  ctx.globalAlpha=1;
+
+  // tooltip
+  const tip=document.getElementById('tipC');
+  cv.addEventListener('mousemove',e=>{
+    const rect=cv.getBoundingClientRect();
+    const sx=e.clientX-rect.left;
+    const mx=Math.round((sx*(W/rect.width)-mg.left)/pw*98+1);
+    if(mx>=1&&mx<=99){
+      let html=`<b>Rival na ${mx}º posição:</b><br>`;
+      rivals.forEach((r,i)=>{
+        const c=allCutoffs[i][mx-1];
+        html+=`<span style="color:${r.color}">${r.name}</span>: Leo precisa `;
+        html+=c>0?`≤${c}º`:`<span style="color:${RED}">impossível</span>`;
+        html+='<br>';
+      });
+      tip.style.display='block';
+      tip.style.left=Math.min(sx+14,rect.width-200)+'px';
+      tip.style.top=(e.clientY-rect.top-50)+'px';
+      tip.innerHTML=html;
+    }else tip.style.display='none';
+  });
+  cv.addEventListener('mouseleave',()=>{tip.style.display='none'});
+})();
+</script>
+</body>
+</html>
