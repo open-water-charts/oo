@@ -90,8 +90,9 @@ select,input[type=range] { background:var(--card); color:var(--text); border:1px
   <button class="btn btn-play" id="btn-play">▶ Play</button>
   <button class="btn btn-sec" id="btn-reset">↺</button>
   <span style="color:var(--text2);font:.76rem 'JetBrains Mono',monospace;">Vel:</span>
-  <input type="range" id="speed-slider" min="1" max="500" value="20" step="1">
-  <div id="speed-val" style="font:.76rem 'JetBrains Mono',monospace;color:var(--text2);">20×</div>
+  <button class="btn btn-sec" id="speed-down" style="font-size:.76rem;padding:2px 8px;min-width:28px;">−</button>
+  <div id="speed-val" style="font:.76rem 'JetBrains Mono',monospace;color:var(--text2);min-width:36px;text-align:center;">20×</div>
+  <button class="btn btn-sec" id="speed-up" style="font-size:.76rem;padding:2px 8px;min-width:28px;">+</button>
   <div class="filter-box">
     <span class="filter-title">Filtros</span>
     <label><input type="checkbox" id="chk-final-a" checked> Final A</label>
@@ -121,8 +122,8 @@ select,input[type=range] { background:var(--card); color:var(--text); border:1px
     <div class="waypoint-hover-line" id="waypoint-hover-line"></div>
     <div class="partial-tooltip" id="partial-tooltip"></div>
   </div>
-  <div id="interp-footnote" style="display:none;margin-top:4px;padding:0 30px;font:.6rem 'JetBrains Mono',monospace;color:rgba(255,255,255,.35);">* parciais estimadas por interpolação</div>
-</div> id="leaderboard">
+</div>
+<div class="leaderboard" id="leaderboard">
   <div class="lb-header" id="lb-drag-handle"><span class="lb-grip">⋮⋮</span><span class="lb-title">Classificação</span><span class="lb-close" id="lb-toggle">—</span></div>
   <div class="lb-body" id="lb-body"></div>
 </div>
@@ -163,8 +164,8 @@ function getInitials(name) {
 }
 function normalizePhase(v) {
   const s = String(v || '').toLowerCase();
-  if (s.includes('elim')) return 'ELIM';
-  if (s.includes('final')) return 'FINAL';
+  if (s.includes('elim') || s === 'pre') return 'ELIM';
+  if (s.includes('final') || s === 'fin') return 'FINAL';
   return s.toUpperCase();
 }
 function makeTag(row) {
@@ -179,6 +180,7 @@ RAW.forEach(d => {
   if (!EVENTS[key]) EVENTS[key] = { key, pn:d.pn, pr:d.pr, dist:d.dist, entries:[], series:new Set(), categories:new Set(), hasFinalA:false, hasFinalB:false, hasElim:false };
   const ev = EVENTS[key];
   d.phaseNorm = normalizePhase(d.ph);
+  if (d.phaseNorm === 'FINAL' && !d.ft) d.ft = 'A';
   d.tag = makeTag(d);
   ev.entries.push(d);
   if (d.cat) ev.categories.add(d.cat);
@@ -229,7 +231,6 @@ function computeWaypointRanks(athletes, waypoints) {
     rows.forEach((r, rank) => rankMaps[r.athleteIdx][dist] = rank);
     athletes.forEach((a, athleteIdx) => { if (rankMaps[athleteIdx][dist] == null) rankMaps[athleteIdx][dist] = athletes.length - 1; });
   });
-  // If only 1 real waypoint (e.g. 50m sprint), start at final rank; otherwise all start tied
   const hasIntermediates = waypoints.filter(d => d > 0).length > 1;
   athletes.forEach((a, athleteIdx) => {
     if (hasIntermediates) {
@@ -362,13 +363,10 @@ function setupRace(resetFilters=false) {
   state.waypoints = allWaypoints;
   state.LANE_H = window.innerWidth < 768 ? 36 : 44;
   buildPoolDOM();
-  const fn = document.getElementById('interp-footnote');
-  if (fn) fn.style.display = state.athletes.some(a => a.interpolated) ? 'block' : 'none';
   render();
   } catch(e) { console.warn('setupRace:', e); }
 }
 function buildPoolDOM() {
-  try {
   const pool = document.getElementById('pool');
   const distMarkers = document.getElementById('dist-markers');
   const hudMarkers = document.getElementById('hud-markers');
@@ -404,7 +402,6 @@ function buildPoolDOM() {
   distMarkers.innerHTML = `<div class="dist-marker" style="left:0%;">0m</div>` + state.waypoints.map(d => `<div class="dist-marker" style="left:${(d / state.totalDist) * 100}%;">${d}m</div>`).join('');
   hudMarkers.innerHTML = state.waypoints.map(d => `<div class="marker" style="left:${(d / state.totalDist) * 100}%;"></div>`).join('');
   sizeTrailCanvas();
-  } catch(e) { console.warn('buildPoolDOM:', e); }
 }
 function sizeTrailCanvas() {
   const canvas = document.getElementById('trail-canvas');
@@ -429,11 +426,9 @@ function drawTrailSegment(ctx, x1, y1, x2, y2, color) {
   ctx.globalAlpha = 1;
 }
 function rebuildTrail() {
-  try {
   clearTrail();
   if (!state.trailEnabled || !state.athletes.length) return;
   const canvas = document.getElementById('trail-canvas');
-  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const poolW = canvas.width, labelW = 30, rightPad = 200, trackW = poolW - labelW - rightPad;
   const prev = state.athletes.map(a => { const p0 = getPosition(a, 0); return { x: labelW, y: p0.rankFloat * state.LANE_H + state.LANE_H / 2 }; });
@@ -447,7 +442,6 @@ function rebuildTrail() {
       prev[idx] = {x, y};
     });
   }
-  } catch(e) { console.warn('rebuildTrail:', e); }
 }
 function render() {
   try {
@@ -480,7 +474,6 @@ function render() {
     }
     }
   }
-  // Gap tag: estimate time gap behind leader using distance difference and leader speed
   // Gap: find leader (most distance covered)
   const leaderPos = positions.reduce((best, p) => (p.dist > best.dist || (p.dist === best.dist && p.time < best.time)) ? p : best, positions[0]);
   const leaderFinished = leaderPos.finished;
@@ -514,7 +507,7 @@ function render() {
         if (distGap > 0.5) timeGap = distGap / leaderSpeed;
       }
     }
-    if (gtag && timeGap > 0.05) {
+    if (timeGap > 0.05) {
       const prevGap = parseFloat(gtag.dataset.prev || '0');
       let color = 'rgba(255,255,255,.55)';
       if (prevGap > 0.1 && timeGap < prevGap - 0.05) color = '#4ade80';
@@ -524,7 +517,7 @@ function render() {
       gtag.style.left = `${x}px`;
       gtag.style.color = color;
       gtag.style.display = 'block';
-    } else if (gtag) {
+    } else {
       gtag.style.display = 'none';
     }
   });
@@ -557,7 +550,6 @@ function hideWaypointTooltip() {
 function getNearestWaypointFromClientX(clientX) {
   if (state.elapsed < state.totalTime || !state.waypoints.length) return null;
   const pool = document.getElementById('pool');
-  if (!pool) return null;
   const rect = pool.getBoundingClientRect();
   const labelW = 30, rightPad = 200, trackW = rect.width - labelW - rightPad;
   const localX = clientX - rect.left, threshold = 12;
@@ -610,7 +602,6 @@ function renderWaypointTooltipAtDistance(dist) {
   tooltip.style.top = '10px';
 }
 function tick(timestamp) {
-  try {
   if (!state.playing) return;
   if (!state.lastTs) state.lastTs = timestamp;
   const dtReal = (timestamp - state.lastTs) / 1000;
@@ -624,7 +615,6 @@ function tick(timestamp) {
   }
   render();
   state.animId = requestAnimationFrame(tick);
-  } catch(e) { console.warn('tick:', e); }
 }
 function play() {
   if (state.elapsed >= state.totalTime) { state.elapsed = 0; state.lastTs = null; hideWaypointTooltip(); }
@@ -643,7 +633,15 @@ function stop() {
 }
 document.getElementById('btn-play').addEventListener('click', () => state.playing ? stop() : play());
 document.getElementById('btn-reset').addEventListener('click', () => { stop(); state.elapsed = 0; state.lastTs = null; hideWaypointTooltip(); render(); });
-document.getElementById('speed-slider').addEventListener('input', (e) => { state.speed = parseInt(e.target.value, 10) || 20; document.getElementById('speed-val').textContent = state.speed + '×'; });
+const SPEED_STEPS = [1,2,3,5,8,10,15,20,30,40,50,80,100,150,200,300,500];
+let speedIdx = SPEED_STEPS.indexOf(20);
+function setSpeed(idx) {
+  speedIdx = Math.max(0, Math.min(SPEED_STEPS.length - 1, idx));
+  state.speed = SPEED_STEPS[speedIdx];
+  document.getElementById('speed-val').textContent = state.speed + '×';
+}
+document.getElementById('speed-down').addEventListener('click', () => setSpeed(speedIdx - 1));
+document.getElementById('speed-up').addEventListener('click', () => setSpeed(speedIdx + 1));
 selEv.addEventListener('change', () => setupRace(true));
 selLimit.addEventListener('change', () => setupRace(false));
 chkFinalA.addEventListener('change', () => setupRace(false));
@@ -663,7 +661,7 @@ document.getElementById('btn-trail').addEventListener('click', () => {
   document.getElementById('btn-trail').textContent = 'Trail: ' + (state.trailEnabled ? 'ON' : 'OFF');
   render();
 });
-window.addEventListener('resize', () => { try { state.LANE_H = window.innerWidth < 768 ? 36 : 44; sizeTrailCanvas(); rebuildTrail(); render(); } catch(e) {} });
+window.addEventListener('resize', () => { state.LANE_H = window.innerWidth < 768 ? 36 : 44; sizeTrailCanvas(); rebuildTrail(); render(); });
 document.getElementById('pool')?.addEventListener('mousemove', (e) => {
   if (state.playing || state.elapsed < state.totalTime) { hideWaypointTooltip(); return; }
   const near = getNearestWaypointFromClientX(e.clientX);
@@ -695,7 +693,6 @@ document.getElementById('pool')?.addEventListener('mouseleave', () => hideWaypoi
     lb.style.left = newX + 'px'; lb.style.top = newY + 'px'; lb.style.bottom = 'auto'; lb.style.right = 'auto'; e.preventDefault();
   }
   function endDrag() { dragging = false; lb.style.transition = ''; }
-  if (!lb || !handle || !toggle) return;
   handle.addEventListener('mousedown', startDrag);
   handle.addEventListener('touchstart', startDrag, {passive:false});
   document.addEventListener('mousemove', onDrag);
